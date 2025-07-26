@@ -1,5 +1,6 @@
 
 import { GenericApiResponse, WeatherData, Station, CachedData, WindVector } from '../types';
+import { distanceCalculator } from '../utils/threadedDistanceCalculator';
 
 export interface WeatherConfig {
   radiusKm: number;
@@ -33,9 +34,9 @@ const getApiHeaders = (): HeadersInit => {
   
   if (apiKey) {
     headers['x-api-key'] = apiKey;
-    console.log('🔑 Using authenticated API requests');
+    console.log('Using authenticated API requests');
   } else {
-    console.warn('⚠️ No API key found. Using unauthenticated requests which may have rate limits.');
+    console.warn('No API key found. Using unauthenticated requests have rate limits.');
   }
   
   return headers;
@@ -71,48 +72,39 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-// Filter stations by proximity to user location
-const filterNearbyStations = (
+// Filter stations by proximity to user location using multi-threaded calculations
+const filterNearbyStations = async (
   stations: Station[], 
   userLat?: number, 
   userLon?: number,
   config: WeatherConfig = DEFAULT_CONFIG
-): Station[] => {
+): Promise<Station[]> => {
   if (!userLat || !userLon) {
     console.log('⚠️ No user location provided, processing all stations');
     return stations;
   }
 
-  const stationsWithDistance = stations
-    .filter(station => station.labelLocation)
-    .map(station => ({
-      station,
-      distance: calculateDistance(
-        userLat, 
-        userLon, 
-        station.labelLocation!.latitude, 
-        station.labelLocation!.longitude
-      )
-    }))
+  // Initialize thread pool for distance calculations
+  await distanceCalculator.initialize();
+
+  // Calculate distances using multi-threading
+  const stationsWithDistance = await distanceCalculator.calculateDistancesParallel(
+    stations,
+    userLat,
+    userLon
+  );
+
+  // Filter by radius and sort by distance
+  const filteredStations = stationsWithDistance
     .filter(item => item.distance <= config.radiusKm)
     .sort((a, b) => a.distance - b.distance)
     .slice(0, config.maxStations);
 
-  let nearbyStations = stationsWithDistance.map(item => item.station);
+  let nearbyStations = filteredStations.map(item => item.station);
   
   // Ensure we have at least a minimum number of stations for reliability
   if (nearbyStations.length < config.minStations && stations.length >= config.minStations) {
-    const allStationsWithDistance = stations
-      .filter(station => station.labelLocation)
-      .map(station => ({
-        station,
-        distance: calculateDistance(
-          userLat, 
-          userLon, 
-          station.labelLocation!.latitude, 
-          station.labelLocation!.longitude
-        )
-      }))
+    const allStationsWithDistance = stationsWithDistance
       .sort((a, b) => a.distance - b.distance)
       .slice(0, config.minStations);
     
@@ -348,7 +340,7 @@ export const fetchWeatherData = async (
     // Filter stations by proximity to user location for optimized processing
     const allStations = Array.from(stationMap.values());
     const nearbyStations = userLocation 
-        ? filterNearbyStations(allStations, userLocation.latitude, userLocation.longitude, config)
+        ? await filterNearbyStations(allStations, userLocation.latitude, userLocation.longitude, config)
         : allStations;
     
     logTiming("Station data processing & filtering", stationProcessingStart);

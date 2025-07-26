@@ -10,6 +10,7 @@ A real-time weather monitoring web application that provides intelligent rainfal
 ## Features
 
 ### Data Flow
+
 1. Check rainfall at all stations first
 2. If no significant rain (< 3mm at ALL stations): Stop processing, inform user
 3. If significant rain detected: Fetch wind direction and wind speed data for vector calculations
@@ -18,17 +19,20 @@ A real-time weather monitoring web application that provides intelligent rainfal
 6. Calculate if rain will reach user location within 15 minutes
 
 ### Math Calculations
+
 1. Geographic coordinates converted to Cartesian for local calculations
 2. Determines if wind vectors point toward user location
 3. Wind speed (knots) and direction converted to velocity vectors (km/h)
 4. Calculates arrival time based on effective velocity components
 
 ### Data Management
+
 - **5-minute Caching**: Weather data cached in localStorage to minimize API calls
 - **Wind Vector Storage**: Normalized velocity vectors persisted for performance
 - **Automatic Cleanup**: Expired cache data automatically removed
 
 ### UI Logic
+
 - **Progressive Display**: Wind data only shown when significant rain detected
 - **Real-time Updates**: Shows current rainfall status and nearest weather station
 - **Visual Indicators**: Different icons and colors for rain vs. no-rain states
@@ -47,23 +51,27 @@ A real-time weather monitoring web application that provides intelligent rainfal
 ## Maths
 
 ### Core Algorithms
+
 1. **Haversine Formula**: Great-circle distance calculation for station proximity filtering
 2. **Vector Analysis**: Wind velocity decomposition and projection for directional prediction
 3. **Dot Product**: Determines if wind vectors point toward user location
 4. **Cartesian Conversion**: Geographic coordinates transformed for efficient local calculations
 
 ### MAth Formulas
+
 - **Distance**: `d = R × 2 × atan2(√a, √(1−a))` where `a = sin²(Δφ/2) + cos φ₁ × cos φ₂ × sin²(Δλ/2)`
-- **Wind Vector**: `v⃗ = (|v| × cos(θ+180°), |v| × sin(θ+180°))` 
+- **Wind Vector**: `v⃗ = (|v| × cos(θ+180°), |v| × sin(θ+180°))`
 - **ETA**: `time = (distance / effective_velocity) × 60` minutes
 
 ### Optimizations
+
 - **O(n log n)** computational complexity through sorted distance filtering
 - **Lazy loading** of wind data only when significant rain detected
 - **5-minute caching** with localStorage reduces API calls by ~80%
 - **Proximity filtering** (15km radius) processes only relevant stations
 
 ### Other Normalizations
+
 ```typescript
 // Wind speed converted from knots to km/h
 const speedKmh = speedKnots * 1.852;
@@ -77,6 +85,7 @@ const velocityY = speedKmh * Math.sin(travelDirectionRad);
 ```
 
 ### Prediction Algorithm
+
 ```typescript
 // Dot product to check if wind points toward user
 const dotProduct = windVector.velocityX * stationToUserX + windVector.velocityY * stationToUserY;
@@ -91,13 +100,14 @@ const timeToReach = (distanceToUser / effectiveVelocity) * 60; // minutes
 > 🧮 Press `Ctrl+Shift+M` in webpage to view formulas, details, and metrics.
 
 ## APIs
+
 - **Rainfall API**: `https://api-open.data.gov.sg/v2/real-time/api/rainfall`
 - **Wind Speed API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-speed`
 - **Wind Direction API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-direction`
 
-
 ## Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm
 - web browser with geolocation and localStorage support. This whole webpage gets saved locally so you don't keep hitting servers.
 - Data.gov.sg API key (optional)
@@ -112,13 +122,15 @@ Create a `.env` file in the root directory with your variables:
 VITE_DATA_GOV_API_KEY=your_api_key_here
 ```
 
-### Data.gov.sg says using an API key grants:
+### Data.gov.sg says using an API key grants
+
 - Improved API response times
 - Higher rate limits
 - More reliable access to weather data
 - Priority processing for your requests
 
 ### Local Development
+
 ```bash
 # Build for production
 npm run build
@@ -127,28 +139,8 @@ npm run build
 npm run preview
 ```
 
-### Cloudflare Workers Deployment
+### First-Time Deployment
 
-```bash
-# Deploy to production
-npm run deploy
-
-# Deploy to staging environment
-npm run deploy:staging
-
-# Run local development with Cloudflare Workers simulation
-npm run cf:dev
-```
-
-**Live Application**: [https://singapore-rain-checker.engtecktan.workers.dev](https://singapore-rain-checker.engtecktan.workers.dev)
-
-#### Deployment Configuration
-The project uses `wrangler.jsonc` for Cloudflare Workers configuration:
-- **Static Assets**: Serves the built React app from `./dist`
-- **SPA Handling**: Routes 404s to `index.html` for client-side routing
-- **Global Distribution**: Automatically cached and served from Cloudflare's edge locations worldwide
-
-#### First-Time Setup for Deployment
 ```bash
 # Install Wrangler CLI
 npm install -g wrangler
@@ -163,17 +155,20 @@ npm run deploy
 ## Architecture
 
 ### Core Components
+
 - **App.tsx**: Main application orchestration
 - **weatherService.ts**: API integration with sequential logic
 - **location.ts**: Vector calculations and geographic utilities
 - **WeatherDisplay.tsx**: UI component with conditional wind data display
 
 ### Type System
+
 - **WindVector**: Normalized velocity components (velocityX, velocityY, magnitude, direction)
 - **WeatherData**: Extended with wind vectors and rain detection flag
 - **Station**: Weather station with geographic coordinates
 
 ### Structure as of 2025-07-26
+
 ```
 src/
 ├── App.tsx              # Main application logic
@@ -189,13 +184,14 @@ src/
 ├── types.ts             # TypeScript definitions
 └── index.tsx           # Application entry point
 ```
+
 ## 🚧 Future Enhancements
+
 - Multiple prediction time windows
 - Integration with weather alerts
 - Offline functionality with cached data
 
-## License
-[MIT License](LICENSE)
+## [MIT License](LICENSE)
 
 ## Acknowledgments
 

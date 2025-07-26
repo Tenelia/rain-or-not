@@ -53,7 +53,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         <div className="flex justify-center items-center text-sky-400 mb-4">
           {isSignificantRain ? <RainIcon className="w-16 h-16" /> : <SunIcon className="w-16 h-16" />}
         </div>
-        <p className={`text-4xl font-bold ${rainfallStatus.color}`}>
+        <p className={`text-2xl font-bold ${rainfallStatus.color}`}>
           {rainfallStatus.text}
         </p>
         <p className="text-slate-300 text-lg mt-2">
@@ -68,7 +68,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         {/* Add note about radar vs station data */}
         {!significantRainDetected && (
           <p className="text-slate-400 text-xs mt-3 leading-relaxed">
-            Radar may show rainfall in your area that hasn't reached nearby weather stations yet
+            Radar map may show rainfall that hasn't reached weather stations.
           </p>
         )}
       </div>
@@ -135,7 +135,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
               <span className="text-amber-300">Vector Analysis:</span> Checking all weather stations within configured radius to determine if rainfall patterns will move towards your location based on wind speed and direction data.
             </p>
             <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-              Note: Station readings (≥1mm) may differ from radar coverage. Rainfall between stations may not be captured in point measurements.
+              Note: Station readings (≥1mm) may differ from radar coverage. Rainfall between stations may not be captured.
             </p>
           </div>
         )}

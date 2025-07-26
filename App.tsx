@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { UserLocation, WeatherData, Station } from './types';
 import { fetchWeatherData } from './services/weatherService';
 import { getDistance, calculateRainPrediction } from './utils/location';
+import { distanceCalculator } from './utils/threadedDistanceCalculator';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorDisplay } from './components/ErrorDisplay';
 import { WeatherDisplay } from './components/WeatherDisplay';
@@ -155,7 +156,13 @@ const App: React.FC = () => {
     };
     
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      // Terminate thread pool when component unmounts
+      distanceCalculator.terminate();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showEasterEgg]);
 
@@ -163,8 +170,8 @@ const App: React.FC = () => {
     <div className="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans selection:bg-sky-400 selection:text-slate-900">
       <div className="w-full max-w-md mx-auto">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-sky-400">Singapore Rain or Not?</h1>
-          <p className="text-slate-400 mt-2">Is rain coming in 15 minutes?</p>
+          <h1 className="text-4xl font-bold text-sky-400">Singapore</h1>
+          <p className="text-slate-400 mt-2">Rain or Not?</p>
         </header>
         
         <main className="bg-slate-800/50 rounded-xl shadow-2xl shadow-slate-950/50 p-6 backdrop-blur-sm border border-slate-700">

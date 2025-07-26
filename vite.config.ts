@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       },
-      plugins: [tailwindcss()]
+      plugins: [tailwindcss()],
+      worker: {
+        format: 'es',
+        plugins: () => [tailwindcss()]
+      }
     };
 });
