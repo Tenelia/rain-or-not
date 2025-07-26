@@ -163,8 +163,8 @@ const App: React.FC = () => {
     <div className="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans selection:bg-sky-400 selection:text-slate-900">
       <div className="w-full max-w-md mx-auto">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-sky-400">Singapore Rain Checker</h1>
-          <p className="text-slate-400 mt-2">Real-time rainfall status and 15-minute vector-based forecast</p>
+          <h1 className="text-4xl font-bold text-sky-400">Singapore Rain or Not?</h1>
+          <p className="text-slate-400 mt-2">Is rain coming in 15 minutes?</p>
         </header>
         
         <main className="bg-slate-800/50 rounded-xl shadow-2xl shadow-slate-950/50 p-6 backdrop-blur-sm border border-slate-700">
@@ -194,7 +194,7 @@ const App: React.FC = () => {
                <button
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="bg-sky-500 text-white font-bold py-2 px-4 rounded-full hover:bg-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75 transition-transform transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:bg-slate-600 disabled:cursor-not-allowed"
+                className="bg-sky-500 text-white font-bold py-2 px-4 rounded-full hover:bg-sky-400 focus:outline-hidden focus:ring-3 focus:ring-sky-400 focus:ring-opacity-75 transition-transform transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:bg-slate-600 disabled:cursor-not-allowed"
               >
                 <RefreshIcon className={isLoading ? 'animate-spin' : ''} />
                 <span className="ml-2">Refresh Data</span>
@@ -202,7 +202,7 @@ const App: React.FC = () => {
             )}
             <button
               onClick={() => setIsConfigOpen(true)}
-              className="bg-slate-600 text-white font-bold py-2 px-4 rounded-full hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-opacity-75 transition-transform transform hover:scale-105 active:scale-95 flex items-center justify-center"
+              className="bg-slate-600 text-white font-bold py-2 px-4 rounded-full hover:bg-slate-500 focus:outline-hidden focus:ring-3 focus:ring-slate-400 focus:ring-opacity-75 transition-transform transform hover:scale-105 active:scale-95 flex items-center justify-center"
             >
               <SettingsIcon className="w-4 h-4" />
               <span className="ml-2">Settings</span>

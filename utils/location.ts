@@ -118,7 +118,7 @@ export const calculateRainPrediction = (
   );
 
   if (rainyStations.length === 0) {
-    const result = 'Significant rain detected but no valid wind data available for prediction.';
+    const result = 'Significant rain detected elsewhere.';
     logTiming("Rain prediction calculation", calculationStart);
     return result;
   }

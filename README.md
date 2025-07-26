@@ -7,14 +7,15 @@ A real-time weather monitoring web application that provides intelligent rainfal
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Vite](https://img.shields.io/badge/Vite-6.x-purple)
 
-## Core Features
+## Features
 
-### Sequential Steps
-1. Fetch rainfall data across all Singapore weather stations
-2. Check if ANY station has ≥3mm rainfall
-3. Only fetch wind speed and wind direction data if significant rain detected
-4. Retrieve user's browser location
-5. Calculate 15-minute rain prediction using wind velocity vectors
+### Data Flow
+1. Check rainfall at all stations first
+2. If no significant rain (< 3mm at ALL stations): Stop processing, inform user
+3. If significant rain detected: Fetch wind direction and wind speed data for vector calculations
+4. Convert wind data to normalized velocity vectors
+5. Store vectors in browser storage for persistence
+6. Calculate if rain will reach user location within 15 minutes
 
 ### Math Calculations
 1. Geographic coordinates converted to Cartesian for local calculations
@@ -27,14 +28,14 @@ A real-time weather monitoring web application that provides intelligent rainfal
 - **Wind Vector Storage**: Normalized velocity vectors persisted for performance
 - **Automatic Cleanup**: Expired cache data automatically removed
 
-### 4. Intelligent UI
+### UI Logic
 - **Progressive Display**: Wind data only shown when significant rain detected
 - **Real-time Updates**: Shows current rainfall status and nearest weather station
 - **Visual Indicators**: Different icons and colors for rain vs. no-rain states
 - **Location Aware**: Displays user coordinates and nearest station information
 - **Easter Egg**: Hidden mathematical analysis section for scientists and engineers (Ctrl+Shift+M)
 
-## 🛠️ Technology Stack
+## Tech Stack
 
 - **Frontend**: React 19 with TypeScript
 - **Build Tool**: Vite 6
@@ -43,7 +44,7 @@ A real-time weather monitoring web application that provides intelligent rainfal
 - **Storage**: Browser localStorage for caching
 - **Geolocation**: Browser Geolocation API
 
-## Mathematical Foundation
+## Maths
 
 ### Core Algorithms
 1. **Haversine Formula**: Great-circle distance calculation for station proximity filtering
@@ -51,37 +52,18 @@ A real-time weather monitoring web application that provides intelligent rainfal
 3. **Dot Product**: Determines if wind vectors point toward user location
 4. **Cartesian Conversion**: Geographic coordinates transformed for efficient local calculations
 
-### Key Formulas
+### MAth Formulas
 - **Distance**: `d = R × 2 × atan2(√a, √(1−a))` where `a = sin²(Δφ/2) + cos φ₁ × cos φ₂ × sin²(Δλ/2)`
 - **Wind Vector**: `v⃗ = (|v| × cos(θ+180°), |v| × sin(θ+180°))` 
 - **ETA**: `time = (distance / effective_velocity) × 60` minutes
 
-### Performance Optimizations
+### Optimizations
 - **O(n log n)** computational complexity through sorted distance filtering
 - **Lazy loading** of wind data only when significant rain detected
 - **5-minute caching** with localStorage reduces API calls by ~80%
 - **Proximity filtering** (15km radius) processes only relevant stations
 
-> 🧮 **For Scientists & Engineers**: Press `Ctrl+Shift+M` in the app to view detailed mathematical analysis with formulas, implementation details, and performance metrics.
-
-## API Integration
-
-### Government APIs Used
-- **Rainfall API**: `https://api-open.data.gov.sg/v2/real-time/api/rainfall`
-- **Wind Speed API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-speed`
-- **Wind Direction API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-direction`
-
-### Data Flow
-1. Check rainfall at all stations first
-2. If no significant rain (< 3mm at ALL stations): Stop processing, inform user
-3. If significant rain detected: Fetch wind data for vector calculations
-4. Convert wind data to normalized velocity vectors
-5. Store vectors in browser storage for persistence
-6. Calculate if rain will reach user within 15 minutes
-
-## 🧮 Mathematical Model
-
-### Vector Normalization
+### Other Normalizations
 ```typescript
 // Wind speed converted from knots to km/h
 const speedKmh = speedKnots * 1.852;
@@ -106,27 +88,37 @@ const effectiveVelocity = dotProduct / distanceToUser;
 const timeToReach = (distanceToUser / effectiveVelocity) * 60; // minutes
 ```
 
-## 🚀 Quick Start
+> 🧮 Press `Ctrl+Shift+M` in webpage to view formulas, details, and metrics.
 
-### Prerequisites
+## APIs
+- **Rainfall API**: `https://api-open.data.gov.sg/v2/real-time/api/rainfall`
+- **Wind Speed API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-speed`
+- **Wind Direction API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-direction`
+
+
+## Prerequisites
 - Node.js 18+ 
-- npm or yarn
-- Modern web browser with geolocation and localStorage support
+- npm
+- web browser with geolocation and localStorage support. This whole webpage gets saved locally so you don't keep hitting servers.
+- Data.gov.sg API key (optional)
 
-### Installation
+### Environment Variables
+
+Create a `.env` file in the root directory with your variables:
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd rain-or-not
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+# Take note of Vite's prefix requirement.
+# Get your API key from: https://guide.data.gov.sg/developer-guide/api-overview/how-to-request-an-api-key
+VITE_DATA_GOV_API_KEY=your_api_key_here
 ```
 
-### Production Build
+### Data.gov.sg says using an API key grants:
+- Improved API response times
+- Higher rate limits
+- More reliable access to weather data
+- Priority processing for your requests
+
+### Local Development
 ```bash
 # Build for production
 npm run build
@@ -135,22 +127,40 @@ npm run build
 npm run preview
 ```
 
-## 📱 Usage
+### Cloudflare Workers Deployment
 
-1. **Open the application** in a web browser
-2. **Grant location permission** when prompted
-3. **View real-time rainfall status** for your area
-4. **Check the 15-minute forecast** based on wind vector analysis
-5. **Refresh manually** or wait for automatic updates
+```bash
+# Deploy to production
+npm run deploy
 
-### Understanding the Display
+# Deploy to staging environment
+npm run deploy:staging
 
-- **Green/Sun Icon**: No significant rain detected
-- **Blue/Rain Icon**: Rain ≥3mm detected at nearby stations
-- **Wind Data**: Only shown when rain is detected
-- **Forecast**: Predicts rain arrival within 15 minutes using vector calculations
+# Run local development with Cloudflare Workers simulation
+npm run cf:dev
+```
 
-## 🏗️ Technical Architecture
+**Live Application**: [https://singapore-rain-checker.engtecktan.workers.dev](https://singapore-rain-checker.engtecktan.workers.dev)
+
+#### Deployment Configuration
+The project uses `wrangler.jsonc` for Cloudflare Workers configuration:
+- **Static Assets**: Serves the built React app from `./dist`
+- **SPA Handling**: Routes 404s to `index.html` for client-side routing
+- **Global Distribution**: Automatically cached and served from Cloudflare's edge locations worldwide
+
+#### First-Time Setup for Deployment
+```bash
+# Install Wrangler CLI
+npm install -g wrangler
+
+# Authenticate with Cloudflare
+wrangler login
+
+# Deploy the application
+npm run deploy
+```
+
+## Architecture
 
 ### Core Components
 - **App.tsx**: Main application orchestration
@@ -163,7 +173,7 @@ npm run preview
 - **WeatherData**: Extended with wind vectors and rain detection flag
 - **Station**: Weather station with geographic coordinates
 
-### Component Structure
+### Structure as of 2025-07-26
 ```
 src/
 ├── App.tsx              # Main application logic
@@ -179,61 +189,15 @@ src/
 ├── types.ts             # TypeScript definitions
 └── index.tsx           # Application entry point
 ```
-
-## 📊 Performance & Production
-
-### Optimizations
-- Sequential API calls prevent unnecessary wind data fetching
-- Efficient vector calculations using dot products
-- Progressive loading with smooth UI transitions
-- Error handling for location permission and API failures
-
-### Data Accuracy
-- Uses deterministic mathematical formulas
-- Based on real-time government weather data
-- 15-minute prediction window balances accuracy with usefulness
-
-## 🧪 Development
-
-### Code Quality
-- Fully typed with TypeScript (interfaces, calculations, components, storage)
-- ESLint configuration for code standards
-- Modern React patterns with hooks
-- Error boundaries for graceful failures
-
 ## 🚧 Future Enhancements
-- Historical rain pattern analysis
 - Multiple prediction time windows
 - Integration with weather alerts
 - Offline functionality with cached data
-- Enhanced visualization with weather maps
 
-## 🤝 Contributing
+## License
+[MIT License](LICENSE)
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit changes (`git commit -am 'Add improvement'`)
-4. Push to branch (`git push origin feature/improvement`)
-5. Create a Pull Request
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Data.gov.sg** for providing real-time weather APIs
 - **NEA Singapore** for meteorological data
-- **React Team** for the excellent framework
-- **Vite Team** for lightning-fast development experience
-
-## 📧 Support
-
-For questions or issues:
-1. Check existing [GitHub Issues](../../issues)
-2. Create a new issue with detailed description
-3. Include browser console errors if applicable
-
----
-
-**Built with ❤️ for Singapore's weather-conscious community** 

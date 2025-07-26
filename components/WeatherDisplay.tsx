@@ -30,10 +30,21 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
   windSpeedUnit,
   significantRainDetected,
 }) => {
-  const isSignificantRain = rainfallValue !== null && rainfallValue >= 3;
+  const isSignificantRain = rainfallValue !== null && rainfallValue >= 1; // Lowered from 3mm to 1mm
+  const isHeavyRain = rainfallValue !== null && rainfallValue >= 3;
   const lastUpdated = new Date(timestamp).toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' });
 
   const mainStatusClasses = isLoading ? 'opacity-50' : 'opacity-100';
+
+  // Determine rainfall status text and color
+  const getRainfallStatus = () => {
+    if (!rainfallValue || rainfallValue < 1) return { text: "No Significant Rain", color: "text-white" };
+    if (rainfallValue >= 3) return { text: "Heavy Rain", color: "text-red-400" };
+    if (rainfallValue >= 2) return { text: "Moderate Rain", color: "text-yellow-400" };
+    return { text: "Light Rain", color: "text-sky-400" };
+  };
+
+  const rainfallStatus = getRainfallStatus();
 
   return (
     <div className={`space-y-6 transition-opacity duration-300 ${!isLoading && 'animate-fade-in'}`}>
@@ -42,8 +53,8 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         <div className="flex justify-center items-center text-sky-400 mb-4">
           {isSignificantRain ? <RainIcon className="w-16 h-16" /> : <SunIcon className="w-16 h-16" />}
         </div>
-        <p className="text-4xl font-bold text-white">
-          {isSignificantRain ? "Significant Rain" : "No Significant Rain"}
+        <p className={`text-4xl font-bold ${rainfallStatus.color}`}>
+          {rainfallStatus.text}
         </p>
         <p className="text-slate-300 text-lg mt-2">
           {rainfallValue !== null ? `${rainfallValue.toFixed(2)} ${rainfallUnit}` : 'N/A'} at nearest station
@@ -52,6 +63,12 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         {significantRainDetected && (
           <p className="text-amber-400 text-sm mt-2 font-medium">
             Wind data collected for vector analysis
+          </p>
+        )}
+        {/* Add note about radar vs station data */}
+        {!significantRainDetected && (
+          <p className="text-slate-400 text-xs mt-3 leading-relaxed">
+            Radar may show rainfall in your area that hasn't reached nearby weather stations yet
           </p>
         )}
       </div>
@@ -78,6 +95,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
             </p>
           </div>
         </div>
+        {/* Only show wind data sections when significant rain is detected anywhere across Singapore */}
         {significantRainDetected && (
           <>
             <div className="bg-slate-800/70 p-4 rounded-lg flex items-center">
@@ -111,6 +129,16 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
         <p className="text-slate-300">
           {prediction || 'Calculating forecast...'}
         </p>
+        {significantRainDetected && (
+          <div className="mt-3 pt-3 border-t border-slate-600">
+            <p className="text-slate-400 text-xs leading-relaxed">
+              <span className="text-amber-300">Vector Analysis:</span> Checking all weather stations within configured radius to determine if rainfall patterns will move towards your location based on wind speed and direction data.
+            </p>
+            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+              Note: Station readings (≥1mm) may differ from radar coverage. Rainfall between stations may not be captured in point measurements.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

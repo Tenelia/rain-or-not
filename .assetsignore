@@ -1,0 +1,38 @@
+# Dependencies
+**/node_modules
+
+# Build tools and configs
+**/.git
+**/.DS_Store
+**/Thumbs.db
+**/desktop.ini
+
+# Development files
+**/.env*
+**/.vscode
+**/.idea
+**/tsconfig.json
+**/vite.config.ts
+**/wrangler.jsonc
+**/package.json
+**/package-lock.json
+
+# Source files (only serve built dist)
+**/src
+**/components
+**/services
+**/utils
+**/types.ts
+**/App.tsx
+**/index.tsx
+
+# Documentation and meta files
+**/README.md
+**/Docs
+**/*.md
+
+# Logs and temporary files
+**/logs
+**/*.log
+**/tmp
+**/temp 

@@ -12,6 +12,35 @@ const API_URLS = {
   wind_speed: 'https://api-open.data.gov.sg/v2/real-time/api/wind-speed',
   wind_direction: 'https://api-open.data.gov.sg/v2/real-time/api/wind-direction',
 };
+
+// Get API key from environment variables
+const getApiKey = (): string | null => {
+  try {
+    const apiKey = import.meta.env.VITE_DATA_GOV_API_KEY;
+    return apiKey || null;
+  } catch (error) {
+    console.warn('Unable to access environment variables:', error);
+    return null;
+  }
+};
+
+// Headers for authenticated API requests
+const getApiHeaders = (): HeadersInit => {
+  const apiKey = getApiKey();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+    console.log('🔑 Using authenticated API requests');
+  } else {
+    console.warn('⚠️ No API key found. Using unauthenticated requests which may have rate limits.');
+  }
+  
+  return headers;
+};
+
 const CACHE_KEY = 'weatherDataCache';
 const WIND_VECTORS_KEY = 'windVectorsCache';
 
@@ -195,7 +224,7 @@ export const fetchWeatherData = async (
   try {
     // Step 1: Fetch rainfall data first
     const rainStart = performance.now();
-    const rainResponse = await fetch(API_URLS.rainfall).then(res => res.json() as Promise<GenericApiResponse>);
+    const rainResponse = await fetch(API_URLS.rainfall, { headers: getApiHeaders() }).then(res => res.json() as Promise<GenericApiResponse>);
     logTiming("Rainfall API", rainStart);
     
     if (rainResponse.code !== 0 || !rainResponse.data) {
@@ -212,8 +241,24 @@ export const fetchWeatherData = async (
         });
     }
 
-    // Step 2: Check if ANY station has 3mm or more rainfall (check ALL stations for safety)
-    const significantRainDetected = Object.values(rainfallMap).some(value => value >= 3);
+    // Step 2: Check if ANY station has 1mm or more rainfall (lowered from 3mm to better match radar data)
+    // Note: Light rainfall (1-2mm) is still meteorologically significant for wind pattern analysis
+    const significantRainDetected = Object.values(rainfallMap).some(value => value >= 1);
+    
+    // Debug logging for rainfall detection
+    const maxRainfall = Math.max(...Object.values(rainfallMap));
+    const rainfallStationsAbove1mm = Object.values(rainfallMap).filter(value => value >= 1).length;
+    const rainfallStationsAbove2mm = Object.values(rainfallMap).filter(value => value >= 2).length;
+    const rainfallStationsAbove3mm = Object.values(rainfallMap).filter(value => value >= 3).length;
+    
+    console.log(`🌧️ Rainfall Analysis:`);
+    console.log(`   Max rainfall detected: ${maxRainfall.toFixed(2)}mm`);
+    console.log(`   Stations ≥1mm: ${rainfallStationsAbove1mm}/${Object.values(rainfallMap).length}`);
+    console.log(`   Stations ≥2mm: ${rainfallStationsAbove2mm}/${Object.values(rainfallMap).length}`);
+    console.log(`   Stations ≥3mm: ${rainfallStationsAbove3mm}/${Object.values(rainfallMap).length}`);
+    console.log(`   Significant rain detected (≥1mm): ${significantRainDetected}`);
+    console.log(`   Heavy rain detected (≥3mm): ${Object.values(rainfallMap).some(value => value >= 3)}`);
+    
     logTiming("Rainfall data processing", processStart);
     
     let windSpeedMap: Record<string, number> = {};
@@ -226,8 +271,8 @@ export const fetchWeatherData = async (
         // Step 3: Fetch wind data only if significant rain is detected
         const windStart = performance.now();
         [windSpeedResponse, windDirResponse] = await Promise.all([
-            fetch(API_URLS.wind_speed).then(res => res.json() as Promise<GenericApiResponse>),
-            fetch(API_URLS.wind_direction).then(res => res.json() as Promise<GenericApiResponse>),
+            fetch(API_URLS.wind_speed, { headers: getApiHeaders() }).then(res => res.json() as Promise<GenericApiResponse>),
+            fetch(API_URLS.wind_direction, { headers: getApiHeaders() }).then(res => res.json() as Promise<GenericApiResponse>),
         ]);
         logTiming("Wind APIs (parallel)", windStart);
 
