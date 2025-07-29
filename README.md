@@ -139,19 +139,6 @@ npm run build
 npm run preview
 ```
 
-### First-Time Deployment
-
-```bash
-# Install Wrangler CLI
-npm install -g wrangler
-
-# Authenticate with Cloudflare
-wrangler login
-
-# Deploy the application
-npm run deploy
-```
-
 ## Architecture
 
 ### Core Components
