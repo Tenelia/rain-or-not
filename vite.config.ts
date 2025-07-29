@@ -5,8 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
-      // Fix for GitHub Pages: Set base path for repository deployment
-      base: process.env.NODE_ENV === 'production' ? '/rain-or-not/' : '/',
+      // Fix for custom domain: Use root path since you have rainornot.sporadicinsights.space
+      base: '/',
       
       // HTTPS development server configuration
       server: {
