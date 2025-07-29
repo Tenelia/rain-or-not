@@ -105,6 +105,18 @@ const timeToReach = (distanceToUser / effectiveVelocity) * 60; // minutes
 - **Wind Speed API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-speed`
 - **Wind Direction API**: `https://api-open.data.gov.sg/v2/real-time/api/wind-direction`
 
+## Security
+
+This application enforces HTTPS-only connections for enhanced security:
+
+- **Content Security Policy (CSP)**: Blocks mixed content and enforces HTTPS for all resources
+- **Strict Transport Security (HSTS)**: Forces HTTPS connections with preload support
+- **Security Headers**: Comprehensive security headers including anti-XSS protection
+- **HTTPS Enforcement**: All external API calls use HTTPS, all SVG namespace references use HTTPS
+- **Secure Development**: Vite configuration includes security headers for both development and production
+
+The application includes utility functions (`utils/httpsUtils.ts`) for HTTPS enforcement and validation.
+
 ## Prerequisites
 
 - Node.js 18+
