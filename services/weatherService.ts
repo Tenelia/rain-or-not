@@ -292,13 +292,31 @@ export const fetchWeatherData = async (
 
         // Step 4: Convert wind data to normalized vectors and save to browser storage
         const vectorStart = performance.now();
+        let vectorsCreated = 0;
+        let stationsWithCompleteWindData = 0;
+        
+        // Count stations with complete wind data
+        Object.keys(windSpeedMap).forEach(stationId => {
+            if (windSpeedMap[stationId] !== undefined && windDirectionMap[stationId] !== undefined) {
+                stationsWithCompleteWindData++;
+            }
+        });
+        
+        // Create vectors for stations with complete data
         Object.keys(windSpeedMap).forEach(stationId => {
             const speed = windSpeedMap[stationId];
             const direction = windDirectionMap[stationId];
             if (speed !== undefined && direction !== undefined && speed > 0) {
                 windVectors[stationId] = convertToWindVector(speed, direction);
+                vectorsCreated++;
             }
         });
+
+        console.log(`🌪️ Wind Vector Analysis:`);
+        console.log(`   Stations with wind speed data: ${Object.keys(windSpeedMap).length}`);
+        console.log(`   Stations with wind direction data: ${Object.keys(windDirectionMap).length}`);
+        console.log(`   Stations with complete wind data: ${stationsWithCompleteWindData}`);
+        console.log(`   Wind vectors created: ${vectorsCreated}`);
 
         saveWindVectors(windVectors);
         logTiming("Vector calculations & storage", vectorStart);

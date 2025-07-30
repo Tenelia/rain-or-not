@@ -1,6 +1,6 @@
 import React from 'react';
 import { Station, UserLocation } from '../types';
-import { RainIcon, SunIcon, MapPinIcon, RadarIcon, ClockIcon, WindIcon, CompassIcon } from './icons';
+import { RainIcon, SunIcon, MapPinIcon, RadarIcon, WindIcon, CompassIcon } from './icons';
 import { convertDegreesToCardinal } from '../utils/location';
 
 interface WeatherDisplayProps {
@@ -8,8 +8,8 @@ interface WeatherDisplayProps {
   rainfallValue: number | null;
   windSpeed: number | null;
   windDirection: number | null;
+  windDataSource: string | null;
   nearestStation: Station | null;
-  prediction: string | null;
   userLocation: UserLocation | null;
   timestamp: string;
   rainfallUnit: string;
@@ -22,8 +22,8 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
   rainfallValue,
   windSpeed,
   windDirection,
+  windDataSource,
   nearestStation,
-  prediction,
   userLocation,
   timestamp,
   rainfallUnit,
@@ -38,7 +38,7 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
 
   // Determine rainfall status text and color
   const getRainfallStatus = () => {
-    if (!rainfallValue || rainfallValue < 1) return { text: "No Significant Rain", color: "text-white" };
+    if (!rainfallValue || rainfallValue <= 0) return { text: "No Significant Rain", color: "text-white" };
     if (rainfallValue >= 3) return { text: "Heavy Rain", color: "text-red-400" };
     if (rainfallValue >= 2) return { text: "Moderate Rain", color: "text-yellow-400" };
     return { text: "Light Rain", color: "text-sky-400" };
@@ -100,46 +100,47 @@ export const WeatherDisplay: React.FC<WeatherDisplayProps> = ({
           <>
             <div className="bg-slate-800/70 p-4 rounded-lg flex items-center">
               <WindIcon className="w-6 h-6 mr-4 text-cyan-400 flex-shrink-0" />
-              <div>
-                <p className="text-slate-400 text-sm">Wind Speed (at nearest station)</p>
-                <p className="text-white font-medium">
-                  {windSpeed !== null ? `${windSpeed.toFixed(1)} ${windSpeedUnit}` : 'N/A'}
+              <div className="flex-1">
+                <p className="text-slate-400 text-sm">
+                  Wind Speed
+                  {windDataSource && windDataSource !== nearestStation?.name && (
+                    <span className="text-amber-400 text-xs ml-1">(from nearby station)</span>
+                  )}
                 </p>
+                <p className="text-white font-medium">
+                  {windSpeed !== null ? `${windSpeed.toFixed(1)} ${windSpeedUnit}` : (
+                    <span className="text-slate-500">Not available at nearby stations</span>
+                  )}
+                </p>
+                {windDataSource && windDataSource !== nearestStation?.name && (
+                  <p className="text-slate-500 text-xs mt-1">Source: {windDataSource}</p>
+                )}
               </div>
             </div>
             <div className="bg-slate-800/70 p-4 rounded-lg flex items-center">
               <CompassIcon className="w-6 h-6 mr-4 text-orange-400 flex-shrink-0" />
-              <div>
-                <p className="text-slate-400 text-sm">Wind Direction (at nearest station)</p>
-                <p className="text-white font-medium">
-                  {windDirection !== null ? `${convertDegreesToCardinal(windDirection)} (${windDirection}°)` : 'N/A'}
+              <div className="flex-1">
+                <p className="text-slate-400 text-sm">
+                  Wind Direction
+                  {windDataSource && windDataSource !== nearestStation?.name && (
+                    <span className="text-amber-400 text-xs ml-1">(from nearby station)</span>
+                  )}
                 </p>
+                <p className="text-white font-medium">
+                  {windDirection !== null ? `${convertDegreesToCardinal(windDirection)} (${windDirection}°)` : (
+                    <span className="text-slate-500">Not available at nearby stations</span>
+                  )}
+                </p>
+                {windDataSource && windDataSource !== nearestStation?.name && (
+                  <p className="text-slate-500 text-xs mt-1">Source: {windDataSource}</p>
+                )}
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Rain Forecast Card */}
-      <div className="bg-slate-800/70 border border-slate-700 rounded-lg p-4 mt-4 text-center">
-         <div className="flex justify-center items-center text-sky-400 mb-3">
-             <ClockIcon className="w-6 h-6 mr-2"/>
-            <h3 className="text-lg font-semibold text-sky-300">Rain Forecast (15 min)</h3>
-        </div>
-        <p className="text-slate-300">
-          {prediction || 'Calculating forecast...'}
-        </p>
-        {significantRainDetected && (
-          <div className="mt-3 pt-3 border-t border-slate-600">
-            <p className="text-slate-400 text-xs leading-relaxed">
-              <span className="text-amber-300">Vector Analysis:</span> Checking all weather stations within configured radius to determine if rainfall patterns will move towards your location based on wind speed and direction data.
-            </p>
-            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-              Note: Station readings (≥1mm) may differ from radar coverage. Rainfall between stations may not be captured.
-            </p>
-          </div>
-        )}
-      </div>
+
     </div>
   );
 };

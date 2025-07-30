@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserLocation, WeatherData, Station } from './types';
 import { fetchWeatherData } from './services/weatherService';
-import { getDistance, calculateRainPrediction } from './utils/location';
+import { getDistance } from './utils/location';
 import { distanceCalculator } from './utils/threadedDistanceCalculator';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorDisplay } from './components/ErrorDisplay';
@@ -16,7 +16,8 @@ const App: React.FC = () => {
   const [rainfallValue, setRainfallValue] = useState<number | null>(null);
   const [windSpeed, setWindSpeed] = useState<number | null>(null);
   const [windDirection, setWindDirection] = useState<number | null>(null);
-  const [prediction, setPrediction] = useState<string | null>(null);
+  const [windDataSource, setWindDataSource] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState<string>('Initializing...');
@@ -54,16 +55,61 @@ const App: React.FC = () => {
     setNearestStation(closestStation);
 
     if (closestStation) {
-      setRainfallValue(data.rainfallMap[closestStation.id] ?? 0);
-      setWindSpeed(data.windSpeedMap[closestStation.id] ?? 0);
-      setWindDirection(data.windDirectionMap[closestStation.id] ?? 0);
+      const stationId = (closestStation as Station).id;
+      const stationRainfall = data.rainfallMap[stationId] ?? 0;
+      console.log(`🎯 Nearest Station: ${(closestStation as Station).name} (ID: ${stationId})`);
+      console.log(`🌧️ Rainfall at nearest station: ${stationRainfall}mm`);
+      console.log(`📊 Station distance: ${minDistance.toFixed(2)}km`);
+      
+      const stationWindSpeed = data.windSpeedMap[stationId];
+      const stationWindDirection = data.windDirectionMap[stationId];
+      console.log(`💨 Wind speed at nearest station: ${stationWindSpeed !== undefined ? stationWindSpeed + ' ' + data.windSpeedUnit : 'NOT AVAILABLE'}`);
+      console.log(`🧭 Wind direction at nearest station: ${stationWindDirection !== undefined ? stationWindDirection + '°' : 'NOT AVAILABLE'}`);
+      console.log(`🌪️ Wind vector available: ${data.windVectors[stationId] ? 'YES' : 'NO'}`);
+      
+      // Try to find fallback wind data from nearby stations if nearest station doesn't have wind data
+      let fallbackWindSpeed = stationWindSpeed;
+      let fallbackWindDirection = stationWindDirection;
+      let windDataSource = (closestStation as Station).name;
+      
+      if (stationWindSpeed === undefined || stationWindDirection === undefined) {
+        // Find nearest station with wind data within 5km
+        let fallbackStation: Station | null = null;
+        let fallbackDistance = Infinity;
+        
+        for (const station of data.stations) {
+          if (station.labelLocation && station.id !== stationId) {
+            const distance = getDistance(location, station.labelLocation);
+            const hasWindData = data.windSpeedMap[station.id] !== undefined && 
+                               data.windDirectionMap[station.id] !== undefined;
+            
+            if (hasWindData && distance < 5 && distance < fallbackDistance) {
+              fallbackStation = station;
+              fallbackDistance = distance;
+            }
+          }
+        }
+        
+        if (fallbackStation) {
+          fallbackWindSpeed = data.windSpeedMap[fallbackStation.id];
+          fallbackWindDirection = data.windDirectionMap[fallbackStation.id];
+          windDataSource = `${fallbackStation.name} (${fallbackDistance.toFixed(1)}km away)`;
+          console.log(`🔄 Using fallback wind data from: ${windDataSource}`);
+        } else {
+          console.log(`❌ No nearby stations with wind data found within 5km`);
+        }
+      }
+      
+      setRainfallValue(stationRainfall);
+      setWindSpeed(fallbackWindSpeed ?? null);
+      setWindDirection(fallbackWindDirection ?? null);
+      setWindDataSource(windDataSource);
     }
   }, []);
 
   const fetchData = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
-    setPrediction(null);
     
     // Don't clear old data on refresh, so it feels smoother
     if (!weatherData) {
@@ -72,6 +118,7 @@ const App: React.FC = () => {
         setRainfallValue(null);
         setWindSpeed(null);
         setWindDirection(null);
+        setWindDataSource(null);
     }
 
     try {
@@ -112,10 +159,7 @@ const App: React.FC = () => {
       // Process the data for UI display
       processWeatherData(location, fetchedWeatherData);
       
-      // Step 5: Calculate prediction using vector analysis
-      setLoadingMessage("Analyzing wind patterns...");
-      const calcPrediction = calculateRainPrediction(location, fetchedWeatherData);
-      setPrediction(calcPrediction);
+      // Vector analysis is performed during data processing, no separate prediction step needed
 
     } catch (err) {
       if (err instanceof Error) {
@@ -184,8 +228,9 @@ const App: React.FC = () => {
               rainfallValue={rainfallValue}
               windSpeed={windSpeed}
               windDirection={windDirection}
+              windDataSource={windDataSource}
               nearestStation={nearestStation}
-              prediction={prediction}
+
               userLocation={userLocation}
               timestamp={weatherData.timestamp}
               rainfallUnit={weatherData.rainfallUnit}
